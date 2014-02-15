@@ -346,7 +346,7 @@ __EOF__
       JAVA_LDFLAGS="-framework JavaVM"
     elif test "$OS_NAME" = "linux"; then
       JAVA_LDFLAGS=""
-      for arch in amd64 i386; do
+      for arch in amd64 i386 arm; do
         dir="$JAVA_HOME/jre/lib/$arch/server"
         if test -e "$dir"; then
           # Note that these are libtool specific flags.

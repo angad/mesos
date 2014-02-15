@@ -646,7 +646,11 @@ struct unwrap<Future<X> >
 inline void acquire(int* lock)
 {
   while (!__sync_bool_compare_and_swap(lock, 0, 1)) {
-    asm volatile ("pause");
+    #if defined(__i386__) || defined(__x86_64__)
+      asm volatile ("pause");
+    #elif defined(__arm__)
+      asm volatile ("NOP");
+    #endif
   }
 }
 

@@ -2676,7 +2676,11 @@ void ProcessManager::cleanup(ProcessBase* process)
   synchronized (processes) {
     // Wait for all process references to get cleaned up.
     while (process->refs > 0) {
-      asm ("pause");
+      #if defined(__i386__) || defined(__x86_64__)
+        asm ("pause");
+      #elif defined(__arm__)
+        asm ("NOP");
+      #endif
       __sync_synchronize();
     }
 
