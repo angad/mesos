@@ -29,6 +29,7 @@
 #include <stout/try.hpp>
 
 #include "common/build.hpp"
+#include "common/protobuf_utils.hpp"
 
 #include "logging/flags.hpp"
 #include "logging/logging.hpp"
@@ -125,8 +126,10 @@ int main(int argc, char** argv)
 
   LOG(INFO) << "Build: " << build::DATE << " by " << build::USER;
 
+  LOG(INFO) << "Version: " << MESOS_VERSION;
+
   if (build::GIT_TAG.isSome()) {
-    LOG(INFO) << "Git TAG: " << build::GIT_TAG.get();
+    LOG(INFO) << "Git tag: " << build::GIT_TAG.get();
   }
 
   if (build::GIT_SHA.isSome()) {
@@ -180,7 +183,7 @@ int main(int argc, char** argv)
   if (zk == "") {
     // It means we are using the standalone detector so we need to
     // appoint this Master as the leader.
-    dynamic_cast<StandaloneMasterDetector*>(detector)->appoint(master->self());
+    dynamic_cast<StandaloneMasterDetector*>(detector)->appoint(master->info());
   }
 
   process::spawn(master);

@@ -302,15 +302,17 @@ Future<Response> Master::Http::redirect(const Request& request)
   LOG(INFO) << "HTTP request for '" << request.path << "'";
 
   // If there's no leader, redirect to this master's base url.
-  UPID pid = master.leader.isSome() ? master.leader.get() : master.self();
+  MasterInfo info = master.leader.isSome() ? master.leader.get() : master.info_;
 
-  Try<string> hostname = net::getHostname(pid.ip);
+  Try<string> hostname =
+    info.has_hostname() ? info.hostname() : net::getHostname(info.ip());
+
   if (hostname.isError()) {
     return InternalServerError(hostname.error());
   }
 
   return TemporaryRedirect(
-      "http://" + hostname.get() + ":" + stringify(pid.port));
+      "http://" + hostname.get() + ":" + stringify(info.port()));
 }
 
 
@@ -407,8 +409,9 @@ Future<Response> Master::Http::state(const Request& request)
   object.values["build_time"] = build::TIME;
   object.values["build_user"] = build::USER;
   object.values["start_time"] = master.startTime.secs();
-  object.values["id"] = master.info.id();
+  object.values["id"] = master.info().id();
   object.values["pid"] = string(master.self());
+  object.values["hostname"] = master.info().hostname();
   object.values["activated_slaves"] = master.slaves.size();
   object.values["deactivated_slaves"] = master.deactivatedSlaves.size();
   object.values["staged_tasks"] = master.stats.tasks[TASK_STAGING];
@@ -423,7 +426,7 @@ Future<Response> Master::Http::state(const Request& request)
   }
 
   if (master.leader.isSome()) {
-    object.values["leader"] = string(master.leader.get());
+    object.values["leader"] = master.leader.get().pid();
   }
 
   if (master.flags.log_dir.isSome()) {

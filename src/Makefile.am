@@ -176,10 +176,11 @@ libmesos_no_3rdparty_la_SOURCES =					\
 	slave/state.cpp							\
 	slave/slave.cpp							\
 	slave/http.cpp							\
-	slave/isolator.cpp						\
-	slave/process_isolator.cpp					\
+	slave/containerizer/containerizer.cpp				\
+	slave/containerizer/isolator.cpp				\
+	slave/containerizer/launcher.cpp				\
+	slave/containerizer/mesos_containerizer.cpp			\
 	slave/status_update_manager.cpp					\
-	launcher/launcher.cpp						\
 	exec/exec.cpp							\
 	common/lock.cpp							\
 	common/date_utils.cpp						\
@@ -204,11 +205,12 @@ pkginclude_HEADERS = $(top_srcdir)/include/mesos/executor.hpp	\
 nodist_pkginclude_HEADERS = ../include/mesos/mesos.hpp mesos.pb.h
 
 if OS_LINUX
-  libmesos_no_3rdparty_la_SOURCES += slave/cgroups_isolator.cpp
   libmesos_no_3rdparty_la_SOURCES += linux/cgroups.cpp
+  libmesos_no_3rdparty_la_SOURCES += slave/containerizer/isolators/cgroups/cpushare.cpp
+  libmesos_no_3rdparty_la_SOURCES += slave/containerizer/isolators/cgroups/mem.cpp
+  libmesos_no_3rdparty_la_SOURCES += slave/containerizer/cgroups_launcher.cpp
   libmesos_no_3rdparty_la_SOURCES += linux/fs.cpp
 else
-  EXTRA_DIST += slave/cgroups_isolator.cpp
   EXTRA_DIST += linux/cgroups.cpp
   EXTRA_DIST += linux/fs.cpp
 endif
@@ -220,7 +222,7 @@ libmesos_no_3rdparty_la_SOURCES += common/attributes.hpp		\
 	common/type_utils.hpp common/thread.hpp				\
 	examples/utils.hpp files/files.hpp				\
 	hdfs/hdfs.hpp							\
-	launcher/launcher.hpp linux/cgroups.hpp				\
+	linux/cgroups.hpp						\
 	linux/fs.hpp local/flags.hpp local/local.hpp			\
 	logging/flags.hpp logging/logging.hpp				\
 	master/allocator.hpp						\
@@ -232,17 +234,22 @@ libmesos_no_3rdparty_la_SOURCES += common/attributes.hpp		\
 	master/registrar.hpp						\
 	master/master.hpp master/sorter.hpp				\
 	messages/messages.hpp slave/constants.hpp			\
+	slave/containerizer/cgroups_launcher.hpp			\
+	slave/containerizer/containerizer.hpp				\
+	slave/containerizer/isolator.hpp				\
+	slave/containerizer/isolators/cgroups/cpushare.hpp		\
+	slave/containerizer/isolators/cgroups/mem.hpp			\
+	slave/containerizer/isolators/posix.hpp				\
+	slave/containerizer/launcher.hpp				\
+	slave/containerizer/mesos_containerizer.hpp			\
 	slave/flags.hpp slave/gc.hpp slave/monitor.hpp			\
-	slave/isolator.hpp						\
-	slave/cgroups_isolator.hpp					\
 	slave/paths.hpp slave/state.hpp					\
 	slave/status_update_manager.hpp					\
-	slave/process_isolator.hpp					\
 	slave/slave.hpp							\
 	tests/environment.hpp tests/script.hpp				\
 	tests/zookeeper.hpp tests/flags.hpp tests/utils.hpp		\
 	tests/cluster.hpp						\
-	tests/isolator.hpp						\
+	tests/containerizer.hpp						\
 	tests/mesos.hpp							\
 	tests/zookeeper_test_server.hpp zookeeper/authentication.hpp	\
 	zookeeper/contender.hpp						\
@@ -391,10 +398,10 @@ mesos_local_SOURCES = local/main.cpp
 mesos_local_CPPFLAGS = $(MESOS_CPPFLAGS)
 mesos_local_LDADD = libmesos.la
 
-pkglibexec_PROGRAMS += mesos-launcher
-mesos_launcher_SOURCES = launcher/main.cpp
-mesos_launcher_CPPFLAGS = $(MESOS_CPPFLAGS)
-mesos_launcher_LDADD = libmesos.la
+pkglibexec_PROGRAMS += mesos-fetcher
+mesos_fetcher_SOURCES = launcher/fetcher.cpp
+mesos_fetcher_CPPFLAGS = $(MESOS_CPPFLAGS)
+mesos_fetcher_LDADD = libmesos.la
 
 pkglibexec_PROGRAMS += mesos-executor
 mesos_executor_SOURCES = launcher/executor.cpp
@@ -838,6 +845,7 @@ mesos_tests_SOURCES =				\
   tests/allocator_tests.cpp			\
   tests/attributes_tests.cpp			\
   tests/authentication_tests.cpp		\
+  tests/containerizer.cpp			\
   tests/environment.cpp				\
   tests/examples_tests.cpp			\
   tests/exception_tests.cpp			\
